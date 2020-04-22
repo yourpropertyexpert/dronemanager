@@ -6,33 +6,83 @@ export default class SettingsScreen extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
-          name: '',
+          servername: '',
           key: '',
           showlogonmessage: true,
           userJSONStatusMessage: '',
           myJSON: [],
           ReposJSON: [],
+          RepoName: "",
+          RepoHistoryJSON: [],
           loggedIn: false,
+          showRepoSelector: false,
+          showCurrentRepoHistory: false,
+          showCurrentHistoryItem: false,
           username: "",
           activeRepos: {},
-          currentRepo: "<None selected>"
+          thisHistoryItem: [],
+          thisHistoryDetail: [],
+          thisHistoryTrigger: "",
+          currentRepo: "<No repo selected>"
       }
 
       this.handleNameChange = this.handleNameChange.bind(this);
       this.handleKeyChange = this.handleKeyChange.bind(this);
       this.handleConnectButtonPress = this.handleConnectButtonPress.bind(this);
       this.handleDisconnectButtonPress = this.handleDisconnectButtonPress.bind(this);
+      this.handleBackFromSingleHistoryItemPress = this.handleBackFromSingleHistoryItemPress.bind(this);
       this.loadMyJSON = this.loadMyJSON.bind(this);
-      this.parseMyJSON = this.parseMyJSON.bind(this);
       this.loadReposJSON = this.loadReposJSON.bind(this);
+      this.loadRepoHistoryJSON = this.loadRepoHistoryJSON.bind(this);
+      this.parseHistoryJSON = this.parseHistoryJSON.bind(this);
+      this.parseHistoryLine = this.parseHistoryLine.bind(this);
+      this.parseMyJSON = this.parseMyJSON.bind(this);
       this.parseReposJSON = this.parseReposJSON.bind(this);
       this.parseReposLine = this.parseReposLine.bind(this);
       this.setRepo = this.setRepo.bind(this);
+      global.showHistoryItem = this.showHistoryItem.bind(this);
+    }
+
+    showHistoryItem(item) {
+        this.setState({showCurrentRepoHistory: false})
+        console.log("Item passed to showHistoryItem:")
+        console.log(item)
+        var uri = "https://"+this.state.servername+"/api/repos/"+this.state.RepoName+"/builds/"+item.number
+        fetch(uri, {
+            method: "GET",
+            headers: {
+                'Authorization': 'Bearer ' + this.state.key
+            }
+        }).then(response => response.json())
+        .then((responseJson)=> {
+            console.log("The response JSON for build " + item.number + " was: ")
+            console.log(responseJson)
+            this.parseHistoryJSON(responseJson)
+          })
+
+        console.log("Getting repo specific build: " + uri)
+        this.setState({thisHistoryItem: item})
+        this.setState({showCurrentHistoryItem: true})
+    }
+
+    parseHistoryJSON(responseObject) {
+        console.log ("Parse history item: ")
+        console.log ("- Object:")
+        console.log (responseObject)
+        this.setState({thisHistoryDetail: JSON.stringify(responseObject)})
+        this.setState({thisHistoryTrigger: responseObject.trigger})
+        console.log ("String:")
+        console.log (JSON.stringify(responseObject))
+        console.log ("/Parse history item: ")
+    }
+
+    parseHistoryLine(item) {
+        console.log
     }
 
     handleNameChange(name) {
         console.log("Name Change");
-        this.setState({ name:name });
+        this.setState({ servername:name });
     }
 
     handleKeyChange = (text) => {
@@ -43,21 +93,31 @@ export default class SettingsScreen extends React.Component {
         console.log("Handling button press")
         this.setState({showlogonmessage: true})
         this.setState({userJSONStatusMessage: "Trying to connect"})
+        this.setState({showCurrentHistoryItem: false})
         this.loadMyJSON()
         this.loadReposJSON()
         var json = "Trying to connect..."
     }
 
+    handleBackFromSingleHistoryItemPress() {
+        this.setState({showlogonmessage: true})
+        this.setState({showCurrentRepoHistory: true})
+        this.setState({showCurrentHistoryItem: false})
+    }
+
+
     handleDisconnectButtonPress() {
         console.log("Handling button press")
         this.setState({loggedIn: false})
+        this.setState({showRepoSelector: false})
+        this.setState({showCurrentRepoHistory: false})
         this.setState({userJSONStatusMessage: "Logged out"})
     }
 
 
     loadMyJSON(){
-        console.log("Getting JSON")
-        var uri = "https://"+this.state.name+"/api/user"
+        console.log("Getting User JSON")
+        var uri = "https://"+this.state.servername+"/api/user"
         console.log("API: " + uri)
         fetch(uri, {
             method: "GET",
@@ -73,12 +133,12 @@ export default class SettingsScreen extends React.Component {
           console.log("setting login JSON")
           this.parseMyJSON()
         })
-        .catch(error=>console.log(error)) //to catch the errors if any
+        .catch(error=>console.log(error))
     }
 
     loadReposJSON(){
         console.log("Getting JSON")
-        var uri = "https://"+this.state.name+"/api/user/repos"
+        var uri = "https://"+this.state.servername+"/api/user/repos"
         console.log("Repos API: " + uri)
         fetch(uri, {
             method: "GET",
@@ -97,6 +157,29 @@ export default class SettingsScreen extends React.Component {
         .catch(error=>console.log(error)) //to catch the errors if any
     }
 
+    loadRepoHistoryJSON(reponame){
+        var uri = "https://"+this.state.servername+"/api/repos/"+reponame+"/builds"
+        console.log("Getting repo history: " + uri)
+        fetch(uri, {
+            method: "GET",
+            headers: {
+                'Authorization': 'Bearer ' + this.state.key
+            }
+        })
+        .then(response => response.json())
+        .then((responseJson)=> {
+          this.setState({
+           RepoHistoryJSON: responseJson,
+           RepoName: reponame
+          })
+          console.log("setting Repo History JSON")
+
+      }).then(responseJson => {this.setState({showCurrentRepoHistory: true})})
+        .catch(error=>console.log(error)) //to catch the errors if any
+
+
+    }
+
     parseReposJSON(){
         console.log("Parsing Repos JSON")
         this.setState({activeRepos: {}})
@@ -105,7 +188,6 @@ export default class SettingsScreen extends React.Component {
         )
         console.log("Active Repos:")
         console.log(this.state.activeRepos)
-
     }
 
     parseReposLine(item) {
@@ -133,13 +215,15 @@ export default class SettingsScreen extends React.Component {
             this.setState({username: this.state.myJSON.login})
             this.setState({userJSONStatusMessage: ''})
             this.setState({loggedIn: true})
+            this.setState({showRepoSelector: true})
         }
     }
 
     setRepo(reponame){
-        console.log("Changed repo to:")
-        console.log(reponame)
+        console.log("Changed repo to " + reponame)
         this.setState({currentRepo: reponame})
+        this.loadRepoHistoryJSON(reponame);
+        this.setState({showRepoSelector: false})
     }
 
   render() {
@@ -148,8 +232,22 @@ export default class SettingsScreen extends React.Component {
       <View style={styles.container}>
       {this.state.loggedIn &&
           <View style={styles.loginblock}>
-          <Text style={styles.logintext}>Logged in as: {this.state.username}</Text>
-          <Text style={styles.logintext}>Looking at: {this.state.currentRepo}</Text>
+          <Text style={styles.logintext}>{this.state.username}
+          {this.state.loggedIn &&
+            <TouchableOpacity onPress={this.handleDisconnectButtonPress}>
+                <Text style={styles.action}> [Log Out]</Text>
+            </TouchableOpacity>
+          }
+          </Text>
+
+          <Text style={styles.logintext}>{this.state.currentRepo}
+            {(this.state.currentRepo != "<No repo selected>") &&
+            <TouchableOpacity onPress={this.handleConnectButtonPress}>
+                <Text style={styles.action}> [Change]</Text>
+            </TouchableOpacity>
+
+            }
+          </Text>
           </View>
       }
 
@@ -158,7 +256,7 @@ export default class SettingsScreen extends React.Component {
           <Text style={styles.header}>Connect to your Drone server</Text>
         <TextInput
           style={styles.textInput}
-          name = 'name'
+          name = 'servername'
           placeholder="<ci.yourdomain.com>"
           onBlur={Keyboard.dismiss}
           onChangeText={this.handleNameChange}
@@ -183,13 +281,11 @@ export default class SettingsScreen extends React.Component {
         </View>
 
         }
-        {this.state.loggedIn &&
+        {this.state.showRepoSelector &&
             <View>
-            {(this.state.activeRepos != {}) &&
                 <Text style={styles.header}>Pick a repo</Text>
-            }
-            <Picker onValueChange={(itemValue, itemIndex) => this.setRepo(itemValue)}>
-            {(this.state.activeRepos != {})  &&
+            <Picker style={styles.picker} onValueChange={(itemValue, itemIndex) => this.setRepo(itemValue)}>
+            {
                 Object.keys(this.state.activeRepos).map((repo, key)=>(
                     <Picker.Item
                         value={repo}
@@ -199,22 +295,52 @@ export default class SettingsScreen extends React.Component {
                 ))
             }
             </Picker>
-            <View  style={styles.buttonsurround}>
-                <TouchableOpacity onPress={this.handleDisconnectButtonPress}>
-                    <Text
-                        style={styles.logoutbutton}
-                    >Disconnect</Text>
-                </TouchableOpacity>
             </View>
+        }
+
+        {this.state.showCurrentRepoHistory &&
+            <View>
+                <Text style={styles.header}>History:</Text>
+                {
+                    this.state.RepoHistoryJSON.map(function(item, key){
+                        return <View key={key}>
+                            <Text style={styles.historyheader}>Build {item.number} - {item.status}</Text>
+                            <Text style={styles.historybody}>{item.message}</Text>
+                            <Text style={styles.historybody}>- Run by {item.sender}</Text>
+                            <Text style={styles.historybody}>- Finished: {Date(item.finished)}</Text>
+                            <TouchableOpacity onPress={()=>global.showHistoryItem(item)}>
+                                <Text style={styles.historyfooter}>[See more]</Text>
+                            </TouchableOpacity>
+                        </View>
+                    })
+                }
+            </View>
+        }
+
+        {this.state.showCurrentHistoryItem &&
+            <View>
+                <Text style={styles.historyheader}>Build {this.state.thisHistoryItem.number}</Text>
+                <Text style={styles.historybody}>{this.state.thisHistoryItem.title}</Text>
+                <Text style={styles.historybody}>- Run by {this.state.thisHistoryItem.sender}</Text>
+                <Text style={styles.historybody}>- Finished: {Date(this.state.thisHistoryItem.finished)}</Text>
+                <Text style={styles.historybody}>- Trigger:  {this.state.thisHistoryTrigger}</Text>
+
+                <TouchableOpacity onPress={this.handleBackFromSingleHistoryItemPress}>
+                    <Text style={styles.historyfooter}>...back</Text>
+                </TouchableOpacity>
+
             </View>
         }
 
         {this.state.showlogonmessage &&
-            <View>
+            <View style={styles.buttonsurround}>
             <Text>{this.state.userJSONStatusMessage}</Text>
             </View>
         }
+
       </View>
+
+
     );
   }
 }
@@ -239,8 +365,9 @@ const styles = StyleSheet.create({
     fontWeight: ''
   },
   buttonsurround: {
-     paddingTop: 20
-  },
+    flex: 1,
+    justifyContent: 'flex-end',
+    marginBottom: 36  },
   mybutton: {
       backgroundColor: 'blue',
           borderColor: 'white',
@@ -275,6 +402,9 @@ const styles = StyleSheet.create({
       paddingLeft: 20,
       paddingRight: 20
   },
+  action: {
+        color: '#0000FF'
+  },
   loginblock: {
       paddingRight: 10,
       paddingTop: 10,
@@ -286,9 +416,19 @@ const styles = StyleSheet.create({
       textAlign: 'right',
       marginLeft: 'auto',
   },
+  picker: {
+      transform: [
+         { scaleX: 1.5 },
+         { scaleY: 1.5 },
+      ]  },
   avatar: {
     width: 107,
     height: 165,
     padding: 10
-  }
+    },
+    historyheader: {color: '#0000FF'},
+    historybody: {color: '#000000'},
+    historyfooter: {color: '#007700', textAlign: 'right'},
+
+
 });
