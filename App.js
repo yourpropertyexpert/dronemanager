@@ -35,7 +35,6 @@ export default class SettingsScreen extends React.Component {
       this.loadReposJSON = this.loadReposJSON.bind(this);
       this.loadRepoHistoryJSON = this.loadRepoHistoryJSON.bind(this);
       this.parseHistoryJSON = this.parseHistoryJSON.bind(this);
-      this.parseHistoryLine = this.parseHistoryLine.bind(this);
       this.parseMyJSON = this.parseMyJSON.bind(this);
       this.parseReposJSON = this.parseReposJSON.bind(this);
       this.parseReposLine = this.parseReposLine.bind(this);
@@ -74,10 +73,6 @@ export default class SettingsScreen extends React.Component {
         console.log ("String:")
         console.log (JSON.stringify(responseObject))
         console.log ("/Parse history item: ")
-    }
-
-    parseHistoryLine(item) {
-        console.log
     }
 
     handleNameChange(name) {
