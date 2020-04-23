@@ -302,7 +302,6 @@ export default class SettingsScreen extends React.Component {
                             <Text style={styles.historyheader}>Build {item.number} - {item.status}</Text>
                             <Text style={styles.historybody}>{item.message}</Text>
                             <Text style={styles.historybody}>- Run by {item.sender}</Text>
-                            <Text style={styles.historybody}>- Finished: {Date(item.finished)}</Text>
                             <TouchableOpacity onPress={()=>global.showHistoryItem(item)}>
                                 <Text style={styles.historyfooter}>[See more]</Text>
                             </TouchableOpacity>
@@ -314,10 +313,9 @@ export default class SettingsScreen extends React.Component {
 
         {this.state.showCurrentHistoryItem &&
             <View>
-                <Text style={styles.historyheader}>Build {this.state.thisHistoryItem.number}</Text>
+                <Text style={styles.historyheader}>Build {this.state.thisHistoryItem.number} - {this.state.thisHistoryItem.status}</Text>
                 <Text style={styles.historybody}>{this.state.thisHistoryItem.title}</Text>
                 <Text style={styles.historybody}>- Run by {this.state.thisHistoryItem.sender}</Text>
-                <Text style={styles.historybody}>- Finished: {Date(this.state.thisHistoryItem.finished)}</Text>
                 <Text style={styles.historybody}>- Trigger:  {this.state.thisHistoryTrigger}</Text>
 
                 <TouchableOpacity onPress={this.handleBackFromSingleHistoryItemPress}>
