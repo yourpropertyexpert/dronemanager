@@ -23,6 +23,7 @@ export default class SettingsScreen extends React.Component {
           activeRepos: {},
           thisHistoryItem: [],
           thisHistoryDetail: [],
+          thisStep: {},
           thisHistoryTrigger: "",
           currentRepo: "<No repo selected>"
       }
@@ -43,6 +44,7 @@ export default class SettingsScreen extends React.Component {
       this.setRepo = this.setRepo.bind(this);
       global.showHistoryItem = this.showHistoryItem.bind(this);
       global.listStages = this.listStages.bind(this);
+      global.setSteps = this.setSteps.bind(this);
       global.listSteps = this.listSteps.bind(this);
     }
 
@@ -77,26 +79,37 @@ export default class SettingsScreen extends React.Component {
         var HistoryDetail = this.state.thisHistoryDetail
         if (HistoryDetail == "") {return <View/>}
         var HistoryObject = JSON.parse(HistoryDetail)
-        console.log("HistoryObject")
-        console.log(HistoryObject.stages)
-        console.log("/HistoryObject")
         return <View>
         {
             Object.values(HistoryObject.stages).map((stage)=>(
-                <TouchableOpacity key={stage.id} onPress={ () => {global.listSteps(stage)}}>
+                <TouchableOpacity key={stage.id} onPress={ () => {global.setSteps(stage)}}>
                 <Text>-- {stage.name}</Text>
                 </TouchableOpacity>
-
             ))
         }
         </View>
     }
 
-    listSteps(stepid) {
-        console.log(stepid)
+    setSteps(stepobject) {
+        console.log(stepobject)
+        this.setState({thisStep: stepobject})
         this.setState({showCurrentHistoryItem: false})
         this.setState({showSpecificStage: true})
         }
+
+    listSteps() {
+        var stepsObject = this.state.thisStep
+        console.log ("listSteps")
+        console.log(stepsObject)
+        console.log ("/listSteps")
+        return(
+            <View>
+                <Text>Here</Text>
+                <Text>Also Here</Text>
+            </View>
+        )
+    }
+
 
     handleNameChange(name) {
         console.log("Name Change");
@@ -361,7 +374,7 @@ export default class SettingsScreen extends React.Component {
 
         {this.state.showSpecificStage &&
             <View>
-                <Text>Showing this one</Text>
+                {global.listSteps()}
                 <TouchableOpacity onPress={this.handleBackSingleStage}>
                     <Text style={styles.historyfooter}>...back</Text>
                 </TouchableOpacity>
