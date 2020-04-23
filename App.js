@@ -45,13 +45,12 @@ export default class SettingsScreen extends React.Component {
       global.showHistoryItem = this.showHistoryItem.bind(this);
       global.listStages = this.listStages.bind(this);
       global.setSteps = this.setSteps.bind(this);
+      global.renderStep = this.renderStep.bind(this);
       global.listSteps = this.listSteps.bind(this);
     }
 
     showHistoryItem(item) {
         this.setState({showCurrentRepoHistory: false})
-        console.log("Item passed to showHistoryItem:")
-        console.log(item)
         var uri = "https://"+this.state.servername+"/api/repos/"+this.state.RepoName+"/builds/"+item.number
         fetch(uri, {
             method: "GET",
@@ -60,8 +59,8 @@ export default class SettingsScreen extends React.Component {
             }
         }).then(response => response.json())
         .then((responseJson)=> {
-            console.log("The response JSON for build " + item.number + " was: ")
-            console.log(responseJson)
+            // console.log("The response JSON for build " + item.number + " was: ")
+            // console.log(responseJson)
             this.parseHistoryJSON(responseJson)
           })
 
@@ -79,11 +78,13 @@ export default class SettingsScreen extends React.Component {
         var HistoryDetail = this.state.thisHistoryDetail
         if (HistoryDetail == "") {return <View/>}
         var HistoryObject = JSON.parse(HistoryDetail)
+        console.log("Stages:")
+        console.log(HistoryObject)
         return <View>
         {
             Object.values(HistoryObject.stages).map((stage)=>(
                 <TouchableOpacity key={stage.id} onPress={ () => {global.setSteps(stage)}}>
-                <Text>-- {stage.name}</Text>
+                <Text>-- {stage.name} ({stage.machine})</Text>
                 </TouchableOpacity>
             ))
         }
@@ -91,7 +92,6 @@ export default class SettingsScreen extends React.Component {
     }
 
     setSteps(stepobject) {
-        console.log(stepobject)
         this.setState({thisStep: stepobject})
         this.setState({showCurrentHistoryItem: false})
         this.setState({showSpecificStage: true})
@@ -99,17 +99,26 @@ export default class SettingsScreen extends React.Component {
 
     listSteps() {
         var stepsObject = this.state.thisStep
-        console.log ("listSteps")
+        console.log("ListSteps:")
         console.log(stepsObject)
-        console.log ("/listSteps")
         return(
             <View>
-                <Text>Here</Text>
-                <Text>Also Here</Text>
+                <Text style={styles.historyheader}>{stepsObject.name}</Text>
+                <Text style={styles.historyheader}>Executed on {stepsObject.machine}</Text>
+                <View>
+                {
+                    stepsObject.steps.map(thisstep => renderStep(thisstep))
+                }
+                </View>
             </View>
         )
     }
 
+    renderStep(step) {
+        console.log("Single Step: ")
+        console.log(step)
+        return (<Text>({step.status}) {step.name} [{step.id}]</Text>)
+    }
 
     handleNameChange(name) {
         console.log("Name Change");
