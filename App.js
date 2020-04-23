@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Button, StyleSheet, Text, View, TextInput, TouchableOpacity, Linking, Picker } from 'react-native';
+import { Button, StyleSheet, Text, View, TextInput, TouchableOpacity, Linking, Picker, Image } from 'react-native';
 
 export default class SettingsScreen extends React.Component {
 
@@ -18,6 +18,7 @@ export default class SettingsScreen extends React.Component {
           showRepoSelector: false,
           showCurrentRepoHistory: false,
           showCurrentHistoryItem: false,
+          showSpecificStage: false,
           username: "",
           activeRepos: {},
           thisHistoryItem: [],
@@ -31,6 +32,7 @@ export default class SettingsScreen extends React.Component {
       this.handleConnectButtonPress = this.handleConnectButtonPress.bind(this);
       this.handleDisconnectButtonPress = this.handleDisconnectButtonPress.bind(this);
       this.handleBackFromSingleHistoryItemPress = this.handleBackFromSingleHistoryItemPress.bind(this);
+      this.handleBackSingleStage = this.handleBackSingleStage.bind(this);
       this.loadMyJSON = this.loadMyJSON.bind(this);
       this.loadReposJSON = this.loadReposJSON.bind(this);
       this.loadRepoHistoryJSON = this.loadRepoHistoryJSON.bind(this);
@@ -40,6 +42,8 @@ export default class SettingsScreen extends React.Component {
       this.parseReposLine = this.parseReposLine.bind(this);
       this.setRepo = this.setRepo.bind(this);
       global.showHistoryItem = this.showHistoryItem.bind(this);
+      global.listStages = this.listStages.bind(this);
+      global.listSteps = this.listSteps.bind(this);
     }
 
     showHistoryItem(item) {
@@ -65,19 +69,38 @@ export default class SettingsScreen extends React.Component {
     }
 
     parseHistoryJSON(responseObject) {
-        console.log ("Parse history item: ")
-        console.log ("- Object:")
-        console.log (responseObject)
         this.setState({thisHistoryDetail: JSON.stringify(responseObject)})
         this.setState({thisHistoryTrigger: responseObject.trigger})
-        console.log ("String:")
-        console.log (JSON.stringify(responseObject))
-        console.log ("/Parse history item: ")
     }
+
+    listStages() {
+        var HistoryDetail = this.state.thisHistoryDetail
+        if (HistoryDetail == "") {return <View/>}
+        var HistoryObject = JSON.parse(HistoryDetail)
+        console.log("HistoryObject")
+        console.log(HistoryObject.stages)
+        console.log("/HistoryObject")
+        return <View>
+        {
+            Object.values(HistoryObject.stages).map((stage)=>(
+                <TouchableOpacity key={stage.id} onPress={ () => {global.listSteps(stage)}}>
+                <Text>-- {stage.name}</Text>
+                </TouchableOpacity>
+
+            ))
+        }
+        </View>
+    }
+
+    listSteps(stepid) {
+        console.log(stepid)
+        this.setState({showCurrentHistoryItem: false})
+        this.setState({showSpecificStage: true})
+        }
 
     handleNameChange(name) {
         console.log("Name Change");
-        this.setState({ servername:name });
+        this.setState({servername:name });
     }
 
     handleKeyChange = (text) => {
@@ -100,6 +123,11 @@ export default class SettingsScreen extends React.Component {
         this.setState({showCurrentHistoryItem: false})
     }
 
+    handleBackSingleStage() {
+        this.setState({showlogonmessage: true})
+        this.setState({showCurrentHistoryItem: true})
+        this.setState({showSpecificStage: false})
+    }
 
     handleDisconnectButtonPress() {
         console.log("Handling button press")
@@ -269,9 +297,7 @@ export default class SettingsScreen extends React.Component {
         <Text style={styles.explainer}>Your personal token is found on the User Settings menu of your drone web console.</Text>
 
         <TouchableOpacity onPress={this.handleConnectButtonPress}>
-            <Text
-                style={styles.mybutton}
-            >Connect</Text>
+            <Text style={styles.mybutton}>Connect</Text>
         </TouchableOpacity>
         </View>
 
@@ -298,7 +324,7 @@ export default class SettingsScreen extends React.Component {
                 <Text style={styles.header}>History:</Text>
                 {
                     this.state.RepoHistoryJSON.map(function(item, key){
-                        return <View key={key}>
+                        return <View style={styles.historyblock} key={key}>
                             <Text style={styles.historyheader}>Build {item.number} - {item.status}</Text>
                             <Text style={styles.historybody}>{item.message}</Text>
                             <Text style={styles.historybody}>- Run by {item.sender}</Text>
@@ -313,15 +339,32 @@ export default class SettingsScreen extends React.Component {
 
         {this.state.showCurrentHistoryItem &&
             <View>
-                <Text style={styles.historyheader}>Build {this.state.thisHistoryItem.number} - {this.state.thisHistoryItem.status}</Text>
-                <Text style={styles.historybody}>{this.state.thisHistoryItem.title}</Text>
-                <Text style={styles.historybody}>- Run by {this.state.thisHistoryItem.sender}</Text>
-                <Text style={styles.historybody}>- Trigger:  {this.state.thisHistoryTrigger}</Text>
+            <Text style={styles.historyheader}>Build {this.state.thisHistoryItem.number} - {this.state.thisHistoryItem.status}</Text>
+                <View style={styles.personblock}>
+                    <Text style={styles.historybody}>{this.state.thisHistoryItem.author_name}</Text>
+                    <Text style={styles.historybody}>({this.state.thisHistoryItem.sender})</Text>
+                    <Image style={styles.avatar} source= {this.state.thisHistoryItem.author_avatar}/>
+                </View>
+                <View style={styles.buildblock}>
+                    <Text style={styles.historybody}>{this.state.thisHistoryItem.message}</Text>
+                </View>
+                <View style={styles.buildblock}>
+                    <Text style={styles.historybody}>Stages:</Text>
+                    {global.listStages()}
+                    <TouchableOpacity onPress={this.handleBackFromSingleHistoryItemPress}>
+                        <Text style={styles.historyfooter}>...back</Text>
+                    </TouchableOpacity>
+                </View>
 
-                <TouchableOpacity onPress={this.handleBackFromSingleHistoryItemPress}>
+            </View>
+        }
+
+        {this.state.showSpecificStage &&
+            <View>
+                <Text>Showing this one</Text>
+                <TouchableOpacity onPress={this.handleBackSingleStage}>
                     <Text style={styles.historyfooter}>...back</Text>
                 </TouchableOpacity>
-
             </View>
         }
 
@@ -330,7 +373,6 @@ export default class SettingsScreen extends React.Component {
             <Text>{this.state.userJSONStatusMessage}</Text>
             </View>
         }
-
       </View>
 
 
@@ -414,14 +456,19 @@ const styles = StyleSheet.create({
          { scaleX: 1.5 },
          { scaleY: 1.5 },
       ]  },
+  personblock: {
+      flex: 1, flexDirection: 'row',
+      backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: 1, padding: 3, margin: 5
+  },
+  buildblock: {backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: 1, padding: 3, margin: 5},
   avatar: {
-    width: 107,
-    height: 165,
-    padding: 10
+    alignSelf: 'flex-end',
+    marginLeft: 'auto',
+    width: 40,
+    height: 60,
     },
+    historyblock: {backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: 1, padding: 3, margin: 5},
     historyheader: {color: '#0000FF'},
     historybody: {color: '#000000'},
     historyfooter: {color: '#007700', textAlign: 'right'},
-
-
 });
