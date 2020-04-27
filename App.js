@@ -43,6 +43,7 @@ export default class SettingsScreen extends React.Component {
       this.parseReposJSON = this.parseReposJSON.bind(this);
       this.parseReposLine = this.parseReposLine.bind(this);
       this.setRepo = this.setRepo.bind(this);
+      global.statusStyle = this.statusStyle.bind(this);
       global.showHistoryItem = this.showHistoryItem.bind(this);
       global.listStages = this.listStages.bind(this);
       global.setSteps = this.setSteps.bind(this);
@@ -85,7 +86,11 @@ export default class SettingsScreen extends React.Component {
         {
             Object.values(HistoryObject.stages).map((stage)=>(
                 <TouchableOpacity key={stage.id} onPress={ () => {global.setSteps(stage)}}>
-                <Text>-- {stage.name} ({stage.machine})</Text>
+                <Text> </Text>
+                <Text style={global.statusStyle(stage.status)}>{stage.name}</Text>
+                <Text>Architecture: {stage.arch}</Text>
+                <Text>Server: {stage.machine}</Text>
+                <Text style={styles.historyfooter}>[See more →]</Text>
                 </TouchableOpacity>
             ))
         }
@@ -250,7 +255,7 @@ export default class SettingsScreen extends React.Component {
         })
     }
 
-    parseMyJSON(){
+    parseMyJSON() {
         this.setState({username: "Marky"})
         console.log(this.state.myJSON)
         if (this.state.myJSON.hasOwnProperty('message')) {
@@ -265,11 +270,25 @@ export default class SettingsScreen extends React.Component {
         }
     }
 
-    setRepo(reponame){
+    setRepo(reponame) {
         console.log("Changed repo to " + reponame)
         this.setState({currentRepo: reponame})
         this.loadRepoHistoryJSON(reponame);
         this.setState({showRepoSelector: false})
+    }
+
+    statusStyle(status) {
+        console.log(status)
+        switch(status) {
+            case "success":
+                return styles.statussuccess
+                break;
+            case "failure":
+            case "error":
+                return styles.statusfailureerror
+            default:
+                return styles.statusdefault
+                }
     }
 
   render() {
@@ -347,12 +366,13 @@ export default class SettingsScreen extends React.Component {
                 <Text style={styles.header}>History:</Text>
                 {
                     this.state.RepoHistoryJSON.map(function(item, key){
+                        var thisstyle = global.statusStyle(item.status)
                         return <View style={styles.historyblock} key={key}>
-                            <Text style={styles.historyheader}>Build {item.number} - {item.status}</Text>
+                            <Text style={thisstyle}>Build {item.number} - {item.status}</Text>
                             <Text style={styles.historybody}>{item.message}</Text>
                             <Text style={styles.historybody}>- Run by {item.sender}</Text>
                             <TouchableOpacity onPress={()=>global.showHistoryItem(item)}>
-                                <Text style={styles.historyfooter}>[See more]</Text>
+                                <Text style={styles.historyfooter}>[See stages →]</Text>
                             </TouchableOpacity>
                         </View>
                     })

@@ -8,6 +8,7 @@ const styles = StyleSheet.create({
     paddingTop: 15,
     backgroundColor: '#FFFFDD',
   },
+  success: {color: '#00FF00'},
   header: {
     fontSize: 25,
     textAlign: 'center',
@@ -79,19 +80,22 @@ const styles = StyleSheet.create({
       ]  },
   personblock: {
       flex: 1, flexDirection: 'row',
-      backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: 1, padding: 3, margin: 5
+      backgroundColor: '#FFFFFF', borderColor: '#0000FF', borderWidth: 1, padding: 3, margin: 5
   },
-  buildblock: {backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: 1, padding: 3, margin: 5},
+  buildblock: {backgroundColor: '#FFFFFF', borderColor: '#0000FF', borderWidth: 1, padding: 3, margin: 5},
   avatar: {
     alignSelf: 'flex-end',
     marginLeft: 'auto',
     width: 40,
     height: 60,
     },
-    historyblock: {backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: 1, padding: 3, margin: 5},
+    historyblock: {borderRadius: 12, backgroundColor: '#FFFFFF', borderColor: '#000000', borderWidth: 1, padding: 3, margin: 5},
     historyheader: {color: '#0000FF'},
     historybody: {color: '#000000'},
     historyfooter: {color: '#007700', textAlign: 'right'},
+    statussuccess: {backgroundColor: '#00FF00', borderRadius: 8, padding: 3},
+    statusdefault: {backgroundColor: '#000000', color: '#FFFFFF', borderRadius: 8, padding: 3},
+    statusfailureerror: {backgroundColor: '#FF0000', borderRadius: 8, padding: 3},
 });
 
 export default styles;
